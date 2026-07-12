@@ -1,3 +1,3 @@
 streamlit
 pandas
-xlrd (Isso é necessário para ler arquivos antigos .xls)
+xlrd 
