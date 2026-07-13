@@ -31,7 +31,7 @@ with st.expander("🔐 Acesso Plantão"):
 # --- BUSCA PARA O CAMPO ---
 if os.path.exists(DATA_FILE):
     df = pd.read_csv(DATA_FILE)
-    df.columns = df.columns.str.strip() # Remove espaços extras nos nomes das colunas
+    df.columns = df.columns.str.strip()
     
     col1, col2 = st.columns(2)
     busca_ativo = col1.text_input("Buscar por Ativo:")
@@ -50,24 +50,29 @@ if os.path.exists(DATA_FILE):
             if 'Sumário' in resultado.columns:
                 st.subheader("📊 Frequência de Ocorrências Críticas")
                 sumarios_texto = " ".join(resultado['Sumário'].fillna('').astype(str).tolist()).lower()
-                
-                contagem = {}
-                for termo in TERMOS_DE_INTERESSE:
-                    if termo in sumarios_texto:
-                        contagem[termo] = sumarios_texto.count(termo)
-                
+                contagem = {termo: sumarios_texto.count(termo) for termo in TERMOS_DE_INTERESSE if termo in sumarios_texto}
                 if contagem:
                     st.bar_chart(pd.DataFrame.from_dict(contagem, orient='index', columns=['Qtd']))
             
-            # --- EXIBIÇÃO DOS DETALHES ---
+            # --- EXIBIÇÃO DOS DETALHES COM BOTÃO WHATSAPP ---
             for index, row in resultado.iterrows():
                 with st.container(border=True):
                     st.subheader(f"Locomotiva: {str(row.get('Ativo', 'N/A'))}")
                     st.markdown(f"**Status:** {row.get('Status', 'N/A')}")
                     st.markdown(f"**Sumário:** {row.get('Sumário', 'Sem descrição')}")
-                    st.markdown(f"**Data da Ocorrência:** {row.get('Data', 'N/A')}")
-                    st.markdown(f"**Data de Abertura SAP:** {row.get('Criação', 'N/A')}")
                     st.info(f"Ocorrência: {row.get('Ocorrência', 'N/A')} | Nota: {row.get('Número Nota', 'N/A')}")
+                    
+                    # Montando a mensagem para o WhatsApp
+                    msg = f"🚨 *Relatório Locomotiva {row.get('Ativo')}*\n\n"
+                    msg += f"*Status:* {row.get('Status')}\n"
+                    msg += f"*Problema:* {row.get('Sumário')}\n"
+                    msg += f"*Nota:* {row.get('Número Nota')}"
+                    
+                    # Codificando a mensagem para o link
+                    import urllib.parse
+                    link_zap = f"https://wa.me/?text={urllib.parse.quote(msg)}"
+                    
+                    st.link_button("📤 Compartilhar via WhatsApp", link_zap)
         else:
             st.warning("Nenhum dado encontrado.")
 else:
