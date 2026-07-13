@@ -30,18 +30,25 @@ if os.path.exists(DATA_FILE):
     busca_ativo = col1.text_input("Buscar por Ativo:")
     busca_nota = col2.text_input("Buscar por Nº Nota:")
 
-    if busca_ativo or busca_nota:
+  if busca_ativo or busca_nota:
         if busca_ativo:
             resultado = df[df['Ativo'].astype(str).str.contains(busca_ativo, case=False)]
         else:
             resultado = df[df['Número Nota'].astype(str).str.contains(busca_nota, case=False)]
         
         if not resultado.empty:
+            # --- Card de Resumo ---
+            st.metric(label="Total de Notas Encontradas", value=len(resultado))
+            
+            # --- Exibição dos Detalhes ---
             for index, row in resultado.iterrows():
                 with st.container(border=True):
                     st.subheader(f"Locomotiva: {row['Ativo']}")
                     st.markdown(f"**Status:** {row['Status']}")
                     st.markdown(f"**Sumário:** {row['Sumário']}")
+                    # Novas datas:
+                    st.markdown(f"**Data da Ocorrência:** {row['Data']}")
+                    st.markdown(f"**Data de Abertura SAP:** {row['Criação']}")
                     st.info(f"Ocorrência: {row['Ocorrência']} | Nota: {row['Número Nota']}")
         else:
             st.warning("Nenhum dado encontrado.")
