@@ -46,16 +46,17 @@ if os.path.exists(DATA_FILE):
             st.metric(label="Total de Notas Encontradas", value=len(resultado))
             
             # --- RAIO-X POR TAGS ---
-# --- RAIO-X POR TAGS (Versão à prova de erros) ---
+# --- RAIO-X POR TAGS (Versão Corrigida) ---
             st.subheader("📊 Frequência de Ocorrências Críticas")
             
-            # Tenta encontrar a coluna de sumário automaticamente
-            col_sumario = next((col for col in resultado.columns if 'sumar' in col.lower()), None)
+            # Forçamos o uso do nome exato que você confirmou que existe
+            col_nome = "Sumário"
             
-            if col_sumario:
-                contagem = {}
-                sumarios_texto = " ".join(resultado[col_sumario].astype(str).tolist()).lower()
+            if col_nome in resultado.columns:
+                # O preenchimento .fillna('') resolve o erro de valor vazio
+                sumarios_texto = " ".join(resultado[col_nome].fillna('').astype(str).tolist()).lower()
                 
+                contagem = {}
                 for termo in TERMOS_DE_INTERESSE:
                     if termo in sumarios_texto:
                         contagem[termo] = sumarios_texto.count(termo)
@@ -65,7 +66,19 @@ if os.path.exists(DATA_FILE):
                 else:
                     st.write("Nenhum termo crítico identificado.")
             else:
-                st.error(f"Coluna de descrição não encontrada! Colunas disponíveis: {list(resultado.columns)}")
+                st.error(f"Coluna '{col_nome}' não encontrada na planilha.")
+            
+            # Exibição dos Detalhes
+            for index, row in resultado.iterrows():
+                with st.container(border=True):
+                    st.subheader(f"Locomotiva: {row['Ativo']}")
+                    st.markdown(f"**Status:** {row['Status']}")
+                    # Exibição segura do Sumário
+                    val_sumario = row[col_nome] if col_nome in row else "Sem descrição"
+                    st.markdown(f"**Sumário:** {val_sumario}")
+                    st.markdown(f"**Data da Ocorrência:** {row['Data']}")
+                    st.markdown(f"**Data de Abertura SAP:** {row['Criação']}")
+                    st.info(f"Ocorrência: {row['Ocorrência']} | Nota: {row['Número Nota']}")
             
             # Exibição dos Detalhes
             for index, row in resultado.iterrows():
