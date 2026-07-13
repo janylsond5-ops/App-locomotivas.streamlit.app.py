@@ -46,26 +46,34 @@ if os.path.exists(DATA_FILE):
             st.metric(label="Total de Notas Encontradas", value=len(resultado))
             
             # --- RAIO-X POR TAGS ---
+# --- RAIO-X POR TAGS (Versão à prova de erros) ---
             st.subheader("📊 Frequência de Ocorrências Críticas")
             
-            contagem = {}
-            sumarios_texto = " ".join(resultado['Sumário'].astype(str).tolist()).lower()
+            # Tenta encontrar a coluna de sumário automaticamente
+            col_sumario = next((col for col in resultado.columns if 'sumar' in col.lower()), None)
             
-            for termo in TERMOS_DE_INTERESSE:
-                if termo in sumarios_texto:
-                    contagem[termo] = sumarios_texto.count(termo)
-            
-            if contagem:
-                st.bar_chart(pd.DataFrame.from_dict(contagem, orient='index', columns=['Qtd']))
+            if col_sumario:
+                contagem = {}
+                sumarios_texto = " ".join(resultado[col_sumario].astype(str).tolist()).lower()
+                
+                for termo in TERMOS_DE_INTERESSE:
+                    if termo in sumarios_texto:
+                        contagem[termo] = sumarios_texto.count(termo)
+                
+                if contagem:
+                    st.bar_chart(pd.DataFrame.from_dict(contagem, orient='index', columns=['Qtd']))
+                else:
+                    st.write("Nenhum termo crítico identificado.")
             else:
-                st.write("Nenhum dos termos críticos foi identificado nos sumários.")
+                st.error(f"Coluna de descrição não encontrada! Colunas disponíveis: {list(resultado.columns)}")
             
             # Exibição dos Detalhes
             for index, row in resultado.iterrows():
                 with st.container(border=True):
                     st.subheader(f"Locomotiva: {row['Ativo']}")
                     st.markdown(f"**Status:** {row['Status']}")
-                    st.markdown(f"**Sumário:** {row['Sumário']}")
+                    # Usa a coluna correta encontrada para exibir o sumário
+                    st.markdown(f"**Sumário:** {row[col_sumario] if col_sumario else 'Não disponível'}")
                     st.markdown(f"**Data da Ocorrência:** {row['Data']}")
                     st.markdown(f"**Data de Abertura SAP:** {row['Criação']}")
                     st.info(f"Ocorrência: {row['Ocorrência']} | Nota: {row['Número Nota']}")
