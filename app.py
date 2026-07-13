@@ -1,17 +1,17 @@
 import streamlit as st
 import pandas as pd
 import os
-from collections import Counter
 
 st.set_page_config(page_title="Consulta de Locomotivas", layout="centered")
 
 DATA_FILE = "dados_locomotivas.csv"
 
-# --- LISTA DE PALAVRAS QUE DEVEM SER IGNORADAS ---
-# O sistema ignorará tudo que estiver aqui para focar no que importa
-IGNORAR = [
-    "informado", "para", "com", "este", "nota", "aberta", 
-    "realizada", "problema", "defeito", "apresenta", "falta"
+# --- LISTA DE TERMOS MONITORADOS ---
+TERMOS_DE_INTERESSE = [
+    "jumper", "buzina", "vandalismo", "corrimão", "porta", 
+    "manômetro", "tanque", "combustível", "corte", "furto", 
+    "parabrisa", "traseira", "dianteira", "danificado", "quebrado", 
+    "tampa", "janela", "farol", "bocal", "mangueira", "fuelink", "freio manual"
 ]
 
 st.title("🔍 Consulta de Locomotivas")
@@ -45,17 +45,20 @@ if os.path.exists(DATA_FILE):
         if not resultado.empty:
             st.metric(label="Total de Notas Encontradas", value=len(resultado))
             
-            # --- RAIO-X REFINADO ---
+            # --- RAIO-X POR TAGS ---
             st.subheader("📊 Frequência de Ocorrências Críticas")
-            # Converte tudo para minúsculo para garantir a contagem correta
-            todos_sumarios = " ".join(resultado['Sumário'].astype(str).tolist()).lower()
-            palavras = todos_sumarios.split()
             
-            # Filtra apenas palavras que NÃO estão na lista de ignorar e que são relevantes
-            palavras_filtradas = [p for p in palavras if p not in IGNORAR and len(p) > 4]
+            contagem = {}
+            sumarios_texto = " ".join(resultado['Sumário'].astype(str).tolist()).lower()
             
-            contagem = pd.DataFrame.from_dict(Counter(palavras_filtradas), orient='index', columns=['Qtd'])
-            st.bar_chart(contagem.sort_values(by='Qtd', ascending=False).head(5))
+            for termo in TERMOS_DE_INTERESSE:
+                if termo in sumarios_texto:
+                    contagem[termo] = sumarios_texto.count(termo)
+            
+            if contagem:
+                st.bar_chart(pd.DataFrame.from_dict(contagem, orient='index', columns=['Qtd']))
+            else:
+                st.write("Nenhum dos termos críticos foi identificado nos sumários.")
             
             # Exibição dos Detalhes
             for index, row in resultado.iterrows():
